@@ -1,0 +1,13 @@
+user=Joe
+bot=LulaBot
+
+bot: Hi! This is Chatbot for Room Booking in SRS Project !!! 
+Please choose date & time.
+user: 15/01/2020 12.00-13.00
+bot: choose tower
+user: Panjatani Tower
+bot: choose floor
+user: 15
+bot: choose room
+user: 1501
+bot: [Suggestions=<Option 1>|<Option 2>|<Option 3>]

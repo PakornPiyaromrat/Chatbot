@@ -21,12 +21,15 @@ class LuisHelper {
 
             const recognizerResult = await recognizer.recognize(context);
 
+            //เลือก intent ที่คะแนนสูงสุด
             const intent = LuisRecognizer.topIntent(recognizerResult);
 
             bookingDetails.intent = intent;
 
-            if (intent === 'Book_flight') {
+            if (intent === 'Book_Room') {
                 // We need to get the result from the LUIS JSON which at every level returns an array
+
+                logger.log('book room intent')
 
                 bookingDetails.destination = LuisHelper.parseCompositeEntity(recognizerResult, 'To', 'Airport');
                 bookingDetails.origin = LuisHelper.parseCompositeEntity(recognizerResult, 'From', 'Airport');
@@ -37,6 +40,9 @@ class LuisHelper {
             }
         } catch (err) {
             logger.warn(`LUIS Exception: ${ err } Check your LUIS configuration`);
+
+            //show intent
+            logger.log(intent)
         }
         return bookingDetails;
     }

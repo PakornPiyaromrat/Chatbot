@@ -1,0 +1,74 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "size": "medium",
+                            "weight": "bolder",
+                            "text": "Log in"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "You need to login before you can book any room.",
+                            "isSubtle": true,
+                            "wrap": true
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "Username",
+                            "wrap": true
+                        },
+                        {
+                            "type": "Input.Text",
+                            "id": "userName",
+                            "placeholder": "Username"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": "Password",
+                            "wrap": true
+                        },
+                        {
+                            "type": "Input.Text",
+                            "id": "password",
+                            "placeholder": "Password",
+                            "style": "Email"
+                        }
+                    ],
+                    "width": 2
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "Image",
+                            "url": "https://png.pngtree.com/svg/20161229/e7a5cf5c9e.svg",
+                            "size": "large"
+                        }
+                    ],
+                    "width": 1
+                }
+            ]
+        },
+        {
+            "type": "Input.Toggle",
+            "id": "toggle",
+            "title": "Remember me",
+            "value": "false"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.Submit",
+            "title": "Log in"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.0"
+}

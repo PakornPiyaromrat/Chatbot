@@ -1,0 +1,66 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "horizontalAlignment": "left",
+                    "size": "medium",
+                    "weight": "bolder",
+                    "text": "Please choose date & time you want."
+                },
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "Start Date & Time"
+                                },
+                                {
+                                    "type": "Input.Date",
+                                    "id": "startDate"
+                                },
+                                {
+                                    "type": "Input.Time",
+                                    "id": "startTime"
+                                }
+                            ],
+                            "width": "stretch"
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "End Date & Time"
+                                },
+                                {
+                                    "type": "Input.Date",
+                                    "id": "endDate"
+                                },
+                                {
+                                    "type": "Input.Time",
+                                    "id": "endTime"
+                                }
+                            ],
+                            "width": "stretch"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.Submit",
+            "title": "Submit"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.0"
+}

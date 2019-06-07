@@ -4,6 +4,8 @@
 const { CardFactory } = require('botbuilder-core');
 const { DialogBot } = require('./dialogBot');
 const WelcomeCard = require('./resources/welcomeCard.json');
+const LoginCard = require('./resources/loginCard.json')
+const ChooseDateTime = require('./resources/chooseDateTime.json')
 
 class DialogAndWelcomeBot extends DialogBot {
     constructor(conversationState, userState, dialog, logger) {
@@ -14,7 +16,13 @@ class DialogAndWelcomeBot extends DialogBot {
             for (let cnt = 0; cnt < membersAdded.length; cnt++) {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     const welcomeCard = CardFactory.adaptiveCard(WelcomeCard);
+                    const loginCard = CardFactory.adaptiveCard(LoginCard)
+                    const chooseDateTime = CardFactory.adaptiveCard(ChooseDateTime)
+                    
                     await context.sendActivity({ attachments: [welcomeCard] });
+                    await context.sendActivity({ attachments: [loginCard] })
+                    await context.sendActivity({ attachments: [chooseDateTime] })
+
                 }
             }
 

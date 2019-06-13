@@ -29,14 +29,17 @@ class LuisHelper {
             if (intent === 'Book_Room') {
                 // We need to get the result from the LUIS JSON which at every level returns an array
 
-                logger.log('book room intent')
+                logger.log("intent : " + intent)
+                logger.log(recognizerResult.entities.datetime)
+                logger.log(recognizerResult.luisResult.entities[0].resolution.values[0])
+                const alpha = recognizerResult.luisResult.entities[0].resolution.values[0].start
+                logger.log("alpha : " + alpha.split(" ")[0])
 
-                bookingDetails.destination = LuisHelper.parseCompositeEntity(recognizerResult, 'To', 'Airport');
-                bookingDetails.origin = LuisHelper.parseCompositeEntity(recognizerResult, 'From', 'Airport');
-
-                // This value will be a TIMEX. And we are only interested in a Date so grab the first result and drop the Time part.
-                // TIMEX is a format that represents DateTime expressions that include some ambiguity. e.g. missing a Year.
-                bookingDetails.travelDate = LuisHelper.parseDatetimeEntity(recognizerResult);
+                bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult);
+                bookingDetails.endTime = LuisHelper.parseStartDate(recognizerResult)
+                bookingDetails.startDate = LuisHelper.parseEndDate(recognizerResult)
+                bookingDetails.endtDate = LuisHelper.parseEndTime(recognizerResult)
+                
             }
         } catch (err) {
             logger.warn(`LUIS Exception: ${ err } Check your LUIS configuration`);
@@ -47,27 +50,38 @@ class LuisHelper {
         return bookingDetails;
     }
 
-    static parseCompositeEntity(result, compositeName, entityName) {
-        const compositeEntity = result.entities[compositeName];
-        if (!compositeEntity || !compositeEntity[0]) return undefined;
+    static parseStartDate(result) {
+        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].start;
+        
+        const startDate = datetimeEntity.split(" ")[0]
 
-        const entity = compositeEntity[0][entityName];
-        if (!entity || !entity[0]) return undefined;
-
-        const entityValue = entity[0][0];
-        return entityValue;
+        return startDate
     }
 
-    static parseDatetimeEntity(result) {
-        const datetimeEntity = result.entities['datetime'];
-        if (!datetimeEntity || !datetimeEntity[0]) return undefined;
-
-        const timex = datetimeEntity[0]['timex'];
-        if (!timex || !timex[0]) return undefined;
-
-        const datetime = timex[0].split('T')[0];
-        return datetime;
+    static parseStartTime(result) {
+        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].start;
+        
+        const startTime = datetimeEntity.split(" ")[1]
+        
+        return startTime
     }
+
+    static parseEndDate(result) {
+        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].end;
+        
+        const endDate = datetimeEntity.split(" ")[0]
+
+        return endDate
+    }
+
+    static parseEndTime(result) {
+        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].end;
+        
+        const endTime = datetimeEntity.split(" ")[1]
+
+        return endTime
+    }
+    
 }
 
 module.exports.LuisHelper = LuisHelper;

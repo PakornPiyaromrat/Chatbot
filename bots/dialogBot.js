@@ -29,6 +29,9 @@ class DialogBot extends ActivityHandler {
 
         this.onMessage(async (context, next) => {
             this.logger.log('Running dialog with Message Activity.');
+            
+            //Show text sent from user
+            this.logger.log(context.activity)
 
             // Run the Dialog with the new message Activity.
             await this.dialog.run(context, this.dialogState);

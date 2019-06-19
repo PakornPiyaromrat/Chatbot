@@ -16,7 +16,7 @@ class DialogAndWelcomeBot extends DialogBot {
             for (let cnt = 0; cnt < membersAdded.length; cnt++) {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
                     const welcomeCard = CardFactory.adaptiveCard(WelcomeCard);
-                    // const loginCard = CardFactory.adaptiveCard(LoginCard)
+                    const loginCard = CardFactory.adaptiveCard(LoginCard)
                     // const chooseDateTime = CardFactory.adaptiveCard(ChooseDateTime)
                     
                     await context.sendActivity({ attachments: [welcomeCard] });

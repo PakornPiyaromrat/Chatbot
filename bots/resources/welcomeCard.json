@@ -13,7 +13,7 @@
       "spacing": "medium",
       "size": "default",
       "weight": "bolder",
-      "text": "Welcome to Bot Framework!",
+      "text": "Welcome to Boom Booking Chatbot",
       "wrap": true,
       "maxLines": 0
     },
@@ -21,26 +21,9 @@
       "type": "TextBlock",
       "size": "default",
       "isSubtle": "yes",
-      "text": "Now that you have successfully run your bot, follow the links in this Adaptive Card to expand your knowledge of Bot Framework.",
+      "text": "Please Login by type your username and password in this formation 'username.password'",
       "wrap": true,
       "maxLines": 0
-    }
-  ],
-  "actions": [
-    {
-      "type": "Action.OpenUrl",
-      "title": "Get over here!!!!",
-      "url": "https://docs.microsoft.com/en-us/azure/bot-service/?view=azure-bot-service-4.0"
-    },
-    {
-      "type": "Action.OpenUrl",
-      "title": "Ask a question",
-      "url": "https://stackoverflow.com/questions/tagged/botframework"
-    },
-    {
-      "type": "Action.OpenUrl",
-      "title": "Learn how to deploy",
-      "url": "https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-howto-deploy-azure?view=azure-bot-service-4.0"
     }
   ]
 }

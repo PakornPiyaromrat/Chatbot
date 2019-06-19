@@ -30,15 +30,13 @@ class LuisHelper {
                 // We need to get the result from the LUIS JSON which at every level returns an array
 
                 logger.log("intent : " + intent)
-                logger.log(recognizerResult.entities.datetime)
-                logger.log(recognizerResult.luisResult.entities[0].resolution.values[0])
-                const alpha = recognizerResult.luisResult.entities[0].resolution.values[0].start
-                logger.log("alpha : " + alpha.split(" ")[0])
+                // logger.log(recognizerResult.luisResult)
+                logger.log(recognizerResult.luisResult.entities[1].resolution.values[0])
 
-                bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult);
-                bookingDetails.endTime = LuisHelper.parseStartDate(recognizerResult)
-                bookingDetails.startDate = LuisHelper.parseEndDate(recognizerResult)
-                bookingDetails.endtDate = LuisHelper.parseEndTime(recognizerResult)
+                bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult)
+                bookingDetails.endTime = LuisHelper.parseEndTime(recognizerResult)
+                bookingDetails.startDate = LuisHelper.parseStartDate(recognizerResult)
+                bookingDetails.endtDate = LuisHelper.parseEndDate(recognizerResult)
                 
             }
         } catch (err) {
@@ -51,7 +49,7 @@ class LuisHelper {
     }
 
     static parseStartDate(result) {
-        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].start;
+        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].start;
         
         const startDate = datetimeEntity.split(" ")[0]
 
@@ -59,7 +57,7 @@ class LuisHelper {
     }
 
     static parseStartTime(result) {
-        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].start;
+        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].start;
         
         const startTime = datetimeEntity.split(" ")[1]
         
@@ -67,7 +65,7 @@ class LuisHelper {
     }
 
     static parseEndDate(result) {
-        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].end;
+        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].end;
         
         const endDate = datetimeEntity.split(" ")[0]
 
@@ -75,7 +73,7 @@ class LuisHelper {
     }
 
     static parseEndTime(result) {
-        const datetimeEntity = result.luisResult.entities[0].resolution.values[0].end;
+        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].end;
         
         const endTime = datetimeEntity.split(" ")[1]
 

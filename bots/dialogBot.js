@@ -36,36 +36,28 @@ class DialogBot extends ActivityHandler {
             //Show text sent from user
             this.logger.log(context.activity)
 
-            const username = await context.activity.text.split('.')[0]
-            const password = await context.activity.text.split('.')[1]
+            const userName = context.activity.text.split('.')[0]
+            const password = context.activity.text.split('.')[1]
 
-            //check if have '.' in utterance then go into if
-            const str = context.activity.text
-            const result = /[.]/.test(str)
-            this.logger.log(result)
+            this.logger.log('username : ', userName)
+            this.logger.log('password : ', password)
 
-            if(result == true) {
-                const userName = context.activity.text.split('.')[0]
-                const password = context.activity.text.split('.')[1]
-
-                this.logger.log('username : ', userName)
-                this.logger.log('password : ', password)
-
+            try {
+                await axios.post( userServiceUrl + '/user/login' , {
+                    username: userName,
+                    password: password
+                })
+                
+                await context.sendActivity('Login Success!!!')
                 // Run the Dialog with the new message Activity.
                 await this.dialog.run(context, this.dialogState);
 
                 // By calling next() you ensure that the next BotHandler is run.
                 await next();
-            } else {
-                this.logger.log('Please enter username & password in this formation [username.password]')
-
-                await context.sendActivity('Please enter username & password in this formation [username.password]')
+            } catch {
+                await context.sendActivity('Login Failed\n Please re-enter username.password!!!')
             }
-            // // Run the Dialog with the new message Activity.
-            // await this.dialog.run(context, this.dialogState);
-
-            // // By calling next() you ensure that the next BotHandler is run.
-            // await next();
+           
         });
 
         this.onDialog(async (context, next) => {

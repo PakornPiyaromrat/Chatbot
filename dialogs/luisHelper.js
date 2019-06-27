@@ -2,6 +2,9 @@
 // Licensed under the MIT License.
 
 const { LuisRecognizer } = require('botbuilder-ai');
+const axios = require('axios')
+
+const roomServiceUrl = 'http://localhost:8082'
 
 class LuisHelper {
     /**
@@ -26,32 +29,47 @@ class LuisHelper {
 
             bookingDetails.intent = intent;
 
-            if (intent === 'Book_Room') {
+            switch (intent) {
+                case 'Book_Room' : 
                 // We need to get the result from the LUIS JSON which at every level returns an array
 
                 logger.log("intent : " + intent)
+                logger.log(recognizerResult)
                 // logger.log(recognizerResult.luisResult)
-                logger.log(recognizerResult.luisResult.entities[1].resolution.values[0])
 
-                bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult)
-                bookingDetails.endTime = LuisHelper.parseEndTime(recognizerResult)
+                let roomName = recognizerResult.entities.Room_Number
+                logger.log(roomName)
+                
+                // logger.log(recognizerResult.luisResult.entities[1].resolution.values[0])
+
+                // แยก Start-End date&time
+                // bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult)
+                // bookingDetails.endTime = LuisHelper.parseEndTime(recognizerResult)
                 bookingDetails.startDate = LuisHelper.parseStartDate(recognizerResult)
                 bookingDetails.endtDate = LuisHelper.parseEndDate(recognizerResult)
                 
+                // book room API
+                let roomId = '5cfdcb47c7ef830d2830b339'
+                
+                await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
+                    startDate: '',
+                    endDate: '',
+                    title: ''
+                })
+
+                context.sendActivity('booking succeed')
+                break;
             }
         } catch (err) {
             logger.warn(`LUIS Exception: ${ err } Check your LUIS configuration`);
-
-            //show intent
-            logger.log(intent)
         }
         return bookingDetails;
     }
 
     static parseStartDate(result) {
-        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].start;
+        const startDate = result.luisResult.entities[1].resolution.values[0].start;
         
-        const startDate = datetimeEntity.split(" ")[0]
+        // const startDate = datetimeEntity.split(" ")[0]
 
         return startDate
     }
@@ -65,9 +83,9 @@ class LuisHelper {
     }
 
     static parseEndDate(result) {
-        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].end;
+        const endDate = result.luisResult.entities[1].resolution.values[0].end;
         
-        const endDate = datetimeEntity.split(" ")[0]
+        // const endDate = datetimeEntity.split(" ")[0]
 
         return endDate
     }

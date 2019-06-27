@@ -5,6 +5,10 @@ const { TimexProperty } = require('@microsoft/recognizers-text-data-types-timex-
 const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog } = require('botbuilder-dialogs');
 const { BookingDialog } = require('./bookingDialog');
 const { LuisHelper } = require('./luisHelper');
+const axios = require('axios')
+const { action, observable } = require('mobx')
+
+const userServiceUrl = 'http://localhost:8080'
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
@@ -25,12 +29,14 @@ class MainDialog extends ComponentDialog {
         this.addDialog(new TextPrompt('TextPrompt'))
             .addDialog(new BookingDialog(BOOKING_DIALOG))
             .addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
+                this.loginStep.bind(this),
                 this.introStep.bind(this),
                 this.actStep.bind(this),
                 this.finalStep.bind(this)
-            ]));
-
+            ]))
+            
         this.initialDialogId = MAIN_WATERFALL_DIALOG;
+
     }
 
     /**
@@ -50,6 +56,36 @@ class MainDialog extends ComponentDialog {
         }
     }
 
+    async loginStep(stepContext) {
+        await stepContext.context.sendActivity('this is login dialog')
+        this.logger.log(stepContext)
+
+        const userName = stepContext.context.activity.text.split('.')[0]
+        const password = stepContext.context.activity.text.split('.')[1]
+
+        this.logger.log('username : ', userName)
+        this.logger.log('password : ', password)
+
+        try {
+            const ans = await axios.post( userServiceUrl + '/user/login' , {
+                username: userName,
+                password: password
+            })
+            this.logger.log(ans.data)
+
+            let accessToken = ans.data.accessToken
+            let refreshToken = ans.data.refreshToken
+
+            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+            
+            await stepContext.context.sendActivity('Login Success!!!')
+            // Run the Dialog with the new message Activity.
+            return await stepContext.next()
+        } catch {
+            await stepContext.context.sendActivity('Login Failed\n Please re-enter username.password!!!')
+        }     
+    }
+
     /**
      * First step in the waterfall dialog. Prompts the user for a command.
      * Currently, this expects a booking request, like "book me a flight from Paris to Berlin on march 22"
@@ -60,9 +96,7 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.');
             return await stepContext.next();
         }
-
         return await stepContext.prompt('TextPrompt', { prompt: 'What can I help you with today?\nSay something like "Book a room 2222 from 2am-3am on today' });
-
     }
 
     /**

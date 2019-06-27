@@ -21,7 +21,7 @@
       "type": "TextBlock",
       "size": "default",
       "isSubtle": "yes",
-      "text": "Please Login by type your username and password in this formation 'username.password'",
+      "text": "Please Login by type your username and password in this formation { username.password }",
       "wrap": true,
       "maxLines": 0
     }

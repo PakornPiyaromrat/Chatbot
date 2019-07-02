@@ -6,9 +6,9 @@ const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialo
 const { BookingDialog } = require('./bookingDialog');
 const { LuisHelper } = require('./luisHelper');
 const axios = require('axios')
-const { action, observable } = require('mobx')
 
 const userServiceUrl = 'http://localhost:8080'
+const roomServiceUrl = 'http://localhost:8082'
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
@@ -67,7 +67,7 @@ class MainDialog extends ComponentDialog {
         this.logger.log('password : ', password)
 
         try {
-            const ans = await axios.post( userServiceUrl + '/user/login' , {
+            const ans = await axios.post(userServiceUrl + '/user/login' , {
                 username: userName,
                 password: password
             })
@@ -111,7 +111,23 @@ class MainDialog extends ComponentDialog {
             // This will attempt to extract the origin, destination and travel date from the user's message
             // and will then pass those values into the booking dialog
             bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context);
+            //! temporary test place bc LUIS is down TT
+            //check room name
+            let roomName = '2222'
+            const check = await axios.get(roomServiceUrl + '/room/check/' + roomName)
+            console.log(check.data)
+            console.log("--------------------------------------------------------------")
+            // book room API
+            let roomId = check.data
+            
+            await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
+                startDate: '',
+                endDate: '',
+                title: ''
+            })
 
+            stepContext.context.sendActivity('booking succeed')
+            //!-----------------------------------------------------------------------
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
         }
 
@@ -119,7 +135,7 @@ class MainDialog extends ComponentDialog {
         // will have multiple different intents each corresponding to starting a different child dialog.
 
         // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
-        return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        // return await stepContext.beginDialog('bookingDialog', bookingDetails);
     }
 
     /**

@@ -38,8 +38,12 @@ class LuisHelper {
                 // logger.log(recognizerResult.luisResult)
 
                 let roomName = recognizerResult.entities.Room_Number
-                logger.log(roomName)
-                
+                logger.log('roomName : ' + roomName)
+
+                //API check roomName and sent roomId back
+                const check = await axios.get(roomServiceUrl + '/room/check/'+ roomName)
+                console.log("check = "+ check)
+
                 // logger.log(recognizerResult.luisResult.entities[1].resolution.values[0])
 
                 // แยก Start-End date&time
@@ -62,6 +66,7 @@ class LuisHelper {
             }
         } catch (err) {
             logger.warn(`LUIS Exception: ${ err } Check your LUIS configuration`);
+            context.sendActivity('failed to use LUIS')
         }
         return bookingDetails;
     }

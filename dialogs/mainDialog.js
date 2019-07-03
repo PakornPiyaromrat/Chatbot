@@ -9,6 +9,7 @@ const axios = require('axios')
 
 const userServiceUrl = 'http://localhost:8080'
 const roomServiceUrl = 'http://localhost:8082'
+const reserveServiceUrl = 'http://localhost:8081'
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
@@ -81,7 +82,8 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('Login Success!!!')
             // Run the Dialog with the new message Activity.
             return await stepContext.next()
-        } catch {
+        } catch (err) {
+            console.log(err)
             await stepContext.context.sendActivity('Login Failed\n Please re-enter username.password!!!')
         }     
     }
@@ -121,9 +123,9 @@ class MainDialog extends ComponentDialog {
             let roomId = check.data
             
             await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
-                startDate: '',
-                endDate: '',
-                title: ''
+                startDate: '2019-06-28T03:45:54.539Z',
+                endDate: '2019-06-28T04:45:00.434Z',
+                title: 'Test'
             })
 
             stepContext.context.sendActivity('booking succeed')
@@ -135,7 +137,7 @@ class MainDialog extends ComponentDialog {
         // will have multiple different intents each corresponding to starting a different child dialog.
 
         // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
-        // return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        return await stepContext.beginDialog('bookingDialog', bookingDetails);
     }
 
     /**
@@ -146,10 +148,17 @@ class MainDialog extends ComponentDialog {
         // If the child dialog ("bookingDialog") was cancelled or the user failed to confirm, the Result here will be null.
         if (stepContext.result) {
             const result = stepContext.result;
+            //!---------------------------------------------------------------------
+            try {
+                let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
+                console.log('ans : ' + ans)
+            } catch (e) {
+                console.log(e)
+            }
+          
+            //!---------------------------------------------------------------------
             // Now we have all the booking details.
-
             // This is where calls to the booking AOU service or database would go.
-
             // If the call to the booking service was successful tell the user.
             const timeProperty = new TimexProperty(result.travelDate);
             const travelDateMsg = timeProperty.toNaturalLanguage(new Date(Date.now()));

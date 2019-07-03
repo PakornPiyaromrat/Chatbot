@@ -32,39 +32,10 @@ class DialogBot extends ActivityHandler {
 
         this.onMessage(async (context, next) => {
             this.logger.log('Running dialog with Message Activity.');
-            
-            //Show text sent from user
-            // this.logger.log(context.activity)
-
-            // const userName = context.activity.text.split('.')[0]
-            // const password = context.activity.text.split('.')[1]
-
-            // this.logger.log('username : ', userName)
-            // this.logger.log('password : ', password)
-
             await this.dialog.run(context, this.dialogState);
 
             // By calling next() you ensure that the next BotHandler is run.
             await next();
-            
-            //Login API
-            // try {
-            //     const ans = await axios.post( userServiceUrl + '/user/login' , {
-            //         username: userName,
-            //         password: password
-            //     })
-            //     this.logger.log(ans.data)
-                
-            //     await context.sendActivity('Login Success!!!')
-            //     // Run the Dialog with the new message Activity.
-            //     await this.dialog.run(context, this.dialogState);
-
-            //     // By calling next() you ensure that the next BotHandler is run.
-            //     await next();
-            // } catch {
-            //     await context.sendActivity('Login Failed\n Please re-enter username.password!!!')
-            // }
-           
         });
 
         this.onDialog(async (context, next) => {

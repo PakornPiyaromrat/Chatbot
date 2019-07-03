@@ -19,9 +19,9 @@ class BookingDialog extends CancelAndHelpDialog {
             .addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
             .addDialog(new DateResolverDialog(DATE_RESOLVER_DIALOG))
             .addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
-                this.destinationStep.bind(this),
-                this.originStep.bind(this),
-                this.travelDateStep.bind(this),
+                // this.destinationStep.bind(this),
+                // this.originStep.bind(this),
+                // this.travelDateStep.bind(this),
                 this.confirmStep.bind(this),
                 this.finalStep.bind(this)
             ]));
@@ -36,7 +36,7 @@ class BookingDialog extends CancelAndHelpDialog {
         const bookingDetails = stepContext.options;
 
         if (!bookingDetails.destination) {
-            return await stepContext.prompt(TEXT_PROMPT, { prompt: 'To what city would you like to travel?' });
+            return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'To what city would you like to travel?' });
         } else {
             return await stepContext.next(bookingDetails.destination);
         }
@@ -81,10 +81,10 @@ class BookingDialog extends CancelAndHelpDialog {
 
         // Capture the results of the previous step
         bookingDetails.travelDate = stepContext.result;
-        const msg = `Please confirm, I have you traveling to: ${ bookingDetails.destination } from: ${ bookingDetails.origin } on: ${ bookingDetails.travelDate }.`;
+        // const msg = `Please confirm, I have you traveling to: ${ bookingDetails.destination } from: ${ bookingDetails.origin } on: ${ bookingDetails.travelDate }.`;
 
         // Offer a YES/NO prompt.
-        return await stepContext.prompt(CONFIRM_PROMPT, { prompt: msg });
+        return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
     }
 
     /**

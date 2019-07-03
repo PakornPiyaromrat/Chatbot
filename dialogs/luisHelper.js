@@ -44,11 +44,6 @@ class LuisHelper {
                 const check = await axios.get(roomServiceUrl + '/room/check/'+ roomName)
                 console.log("check = "+ check)
 
-                // logger.log(recognizerResult.luisResult.entities[1].resolution.values[0])
-
-                // แยก Start-End date&time
-                // bookingDetails.startTime = LuisHelper.parseStartTime(recognizerResult)
-                // bookingDetails.endTime = LuisHelper.parseEndTime(recognizerResult)
                 bookingDetails.startDate = LuisHelper.parseStartDate(recognizerResult)
                 bookingDetails.endtDate = LuisHelper.parseEndDate(recognizerResult)
                 
@@ -71,28 +66,12 @@ class LuisHelper {
         return bookingDetails;
     }
 
-    static parseStartDate(result) {
-        const startDate = result.luisResult.entities[1].resolution.values[0].start;
-        
-        // const startDate = datetimeEntity.split(" ")[0]
-
-        return startDate
-    }
-
     static parseStartTime(result) {
         const datetimeEntity = result.luisResult.entities[1].resolution.values[0].start;
         
         const startTime = datetimeEntity.split(" ")[1]
         
         return startTime
-    }
-
-    static parseEndDate(result) {
-        const endDate = result.luisResult.entities[1].resolution.values[0].end;
-        
-        // const endDate = datetimeEntity.split(" ")[0]
-
-        return endDate
     }
 
     static parseEndTime(result) {

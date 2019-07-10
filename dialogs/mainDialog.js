@@ -117,11 +117,19 @@ class MainDialog extends ComponentDialog {
             //check room name
             let roomName = '2222'
             const check = await axios.get(roomServiceUrl + '/room/check/' + roomName)
-            console.log(check.data)
+            console.log('roomId : ' + check.data)
             console.log("--------------------------------------------------------------")
             // book room API
             let roomId = check.data
-            
+          
+            await axios.get(roomServiceUrl + '/room/checkDateTime', {
+                params : {
+                    roomId: roomId,
+                    startDate: '2019-06-28T03:45:54.539Z',
+                    endDate: '2019-06-28T04:45:00.434Z'
+                }
+            })
+        
             await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
                 startDate: '2019-06-28T03:45:54.539Z',
                 endDate: '2019-06-28T04:45:00.434Z',

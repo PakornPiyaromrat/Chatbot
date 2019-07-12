@@ -6,6 +6,7 @@ const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialo
 const { BookingDialog } = require('./bookingDialog');
 const { LuisHelper } = require('./luisHelper');
 const axios = require('axios')
+const jwtDecode = require('jwt-decode')
 
 const userServiceUrl = 'http://localhost:8080'
 const roomServiceUrl = 'http://localhost:8082'
@@ -59,7 +60,6 @@ class MainDialog extends ComponentDialog {
 
     async loginStep(stepContext) {
         await stepContext.context.sendActivity('this is login dialog')
-        this.logger.log(stepContext)
 
         const userName = stepContext.context.activity.text.split('.')[0]
         const password = stepContext.context.activity.text.split('.')[1]
@@ -72,10 +72,13 @@ class MainDialog extends ComponentDialog {
                 username: userName,
                 password: password
             })
-            this.logger.log(ans.data)
+            console.log(ans.data)
 
             let accessToken = ans.data.accessToken
-            let refreshToken = ans.data.refreshToken
+
+            let decoded = jwtDecode(accessToken)
+            let userId = decoded.userId
+            console.log('userId : ' + userId)
 
             axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
             
@@ -113,30 +116,37 @@ class MainDialog extends ComponentDialog {
             // This will attempt to extract the origin, destination and travel date from the user's message
             // and will then pass those values into the booking dialog
             bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context);
+            
             //! temporary test place bc LUIS is down TT
             //check room name
-            let roomName = '2222'
-            const check = await axios.get(roomServiceUrl + '/room/check/' + roomName)
-            console.log('roomId : ' + check.data)
-            console.log("--------------------------------------------------------------")
-            // book room API
-            let roomId = check.data
-          
-            await axios.get(roomServiceUrl + '/room/checkDateTime', {
-                params : {
-                    roomId: roomId,
-                    startDate: '2019-06-28T03:45:54.539Z',
-                    endDate: '2019-06-28T04:45:00.434Z'
-                }
-            })
-        
-            await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
-                startDate: '2019-06-28T03:45:54.539Z',
-                endDate: '2019-06-28T04:45:00.434Z',
-                title: 'Test'
-            })
+            // let roomName = '2222'
+            // let check = await axios.get(roomServiceUrl + '/room/check/' + roomName)
+            // console.log('roomId : ' + check.data)
+            // // book room API
+            // let roomId = check.data
+            // let startDate = '2025-06-28T03:45:54.539Z'
+            // let endDate =  '2025-06-28T04:45:00.434Z'
 
-            stepContext.context.sendActivity('booking succeed')
+            // //getCreatingReservationByUserId
+            // let get = await axios.get(reserveServiceUrl + '/reservation/current/')
+            // console.log(get.data)
+            
+            
+            // await axios.get(roomServiceUrl + '/room/checkDateTime', {
+            //     params : {
+            //         roomId: roomId,
+            //         startDate: startDate,
+            //         endDate: endDate
+            //     }
+            // })
+
+            // let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
+            //     startDate: startDate,
+            //     endDate: endDate,
+            //     title: 'Test'
+            // })
+            // console.log(room.data)
+
             //!-----------------------------------------------------------------------
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
         }
@@ -159,7 +169,8 @@ class MainDialog extends ComponentDialog {
             //!---------------------------------------------------------------------
             try {
                 let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
-                console.log('ans : ' + ans)
+                console.log(ans.data)
+                stepContext.context.sendActivity('Reservation Confirmed')
             } catch (e) {
                 console.log(e)
             }
@@ -173,7 +184,9 @@ class MainDialog extends ComponentDialog {
             const msg = `I have you booked to ${ result.destination } from ${ result.origin } on ${ travelDateMsg }.`;
             await stepContext.context.sendActivity(msg);
         } else {
-            await stepContext.context.sendActivity('Thank you.');
+            let ans = await axios.delete(reserveServiceUrl + '/reservation/current')
+            console.log(ans.data)
+            await stepContext.context.sendActivity('Reservation Cancel');
         }
         return await stepContext.endDialog();
     }

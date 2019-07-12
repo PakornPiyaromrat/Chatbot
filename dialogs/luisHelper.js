@@ -5,6 +5,7 @@ const { LuisRecognizer } = require('botbuilder-ai');
 const axios = require('axios')
 
 const roomServiceUrl = 'http://localhost:8082'
+const reserveServiceUrl = 'http://localhost:8081'
 
 class LuisHelper {
     /**
@@ -35,28 +36,75 @@ class LuisHelper {
 
                 logger.log("intent : " + intent)
                 logger.log(recognizerResult)
-                // logger.log(recognizerResult.luisResult)
+                console.log('----------------------------------')
+                logger.log(recognizerResult.entities.datetime)
 
                 let roomName = recognizerResult.entities.Room_Number
+                console.log('----------------------------------')
                 logger.log('roomName : ' + roomName)
+                console.log('----------------------------------')
 
                 //API check roomName and sent roomId back
                 const check = await axios.get(roomServiceUrl + '/room/check/'+ roomName)
-                console.log("check = "+ check)
+                let roomId = check.data
+                console.log("roomId :  "+ roomId)
+                console.log('----------------------------------')
 
-                bookingDetails.startDate = LuisHelper.parseStartDate(recognizerResult)
-                bookingDetails.endtDate = LuisHelper.parseEndDate(recognizerResult)
+                let startDate = recognizerResult.luisResult.entities[1].resolution.values[0].start.replace(' ','T')
+                let endDate = recognizerResult.luisResult.entities[1].resolution.values[0].end.replace(' ','T')
+
+                console.log(startDate)
+
+                // let startDate = await recognizerResult.entities.datetime[0].timex[0].replace(/[()]/g,'').split(',')[0]
+                // let endDate = await recognizerResult.entities.datetime[0].timex[0].replace(/[()]/g,'').split(',')[1]
+                // console.log(startDate)
+                // console.log(endDate)
+
+                // let startDate = await LuisHelper.parseStartTime(recognizerResult)
+                // let endDate = await LuisHelper.parseEndTime(recognizerResult)
+
+                console.log('startDate : ' + startDate + ' ' + 'endDate : ' + endDate)
+
+                bookingDetails.startDate = startDate     
+                bookingDetails.endtDate = endDate
                 
-                // book room API
-                let roomId = '5cfdcb47c7ef830d2830b339'
-                
-                await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
-                    startDate: '',
-                    endDate: '',
-                    title: ''
+                //getCreatingReservationByUserId
+                let get = await axios.get(reserveServiceUrl + '/reservation/current/')
+                console.log(get.data)
+
+                //check dateTime status
+                let status = await axios.get(roomServiceUrl + '/room/checkDateTime', {
+                    params : {
+                        roomId: roomId,
+                        startDate: startDate,
+                        endDate: endDate
+                    }
                 })
+                console.log('roomstatus : ' + status.data)
+                if ( status == 'reserved' ) {
+                    context.sendActivity('room is already reserved')
+                    
+                    break
+                } else {
+                    // book room API 
+                    let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
+                        startDate: startDate,
+                        endDate: endDate,
+                        title: 'Test'
+                    })
+                    console.log(room.data)
 
-                context.sendActivity('booking succeed')
+                    await context.sendActivity('passed LUIS')
+                }
+                // book room API 
+                // let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
+                //     startDate: startDate,
+                //     endDate: endDate,
+                //     title: 'Test'
+                // })
+                // console.log(room.data)
+
+                // await context.sendActivity('passed LUIS')
                 break;
             }
         } catch (err) {
@@ -67,17 +115,18 @@ class LuisHelper {
     }
 
     static parseStartTime(result) {
-        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].start;
-        
-        const startTime = datetimeEntity.split(" ")[1]
-        
+        let datetimeEntity = result.entities.datetime[0].timex[0].replace(/[()]/g,'')
+        console.log('parsedatetime1 : ' + datetimeEntity.split(',')[0])
+
+        let startTime = datetimeEntity.split(',')[0]
         return startTime
     }
 
     static parseEndTime(result) {
-        const datetimeEntity = result.luisResult.entities[1].resolution.values[0].end;
+        let datetimeEntity = result.entities.datetimex[0].timex[0].replace(/[()]/g,'')
+        console.log('parsedatetime2 : ' + datetimeEntity.split(',')[1])
         
-        const endTime = datetimeEntity.split(" ")[1]
+        let endTime = datetimeEntity.split(',')
 
         return endTime
     }

@@ -2,9 +2,12 @@
 // Licensed under the MIT License.
 
 const { TimexProperty } = require('@microsoft/recognizers-text-data-types-timex-expression');
-const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog } = require('botbuilder-dialogs');
+const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog, ChoicePrompt } = require('botbuilder-dialogs');
 const { BookingDialog } = require('./bookingDialog');
 const { LuisHelper } = require('./luisHelper');
+const { LoginDialog } = require('./loginDialog')
+const { ChooseDialog } = require('./chooseDialog')
+
 const axios = require('axios')
 const jwtDecode = require('jwt-decode')
 
@@ -14,6 +17,7 @@ const reserveServiceUrl = 'http://localhost:8081'
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
+// const LOGIN_DIALOG = 'loginDialog'
 
 class MainDialog extends ComponentDialog {
     constructor(logger) {
@@ -29,7 +33,9 @@ class MainDialog extends ComponentDialog {
         // Define the main dialog and its related components.
         // This is a sample "book a flight" dialog.
         this.addDialog(new TextPrompt('TextPrompt'))
+            .addDialog(new ChoicePrompt('ChoicePrompt'))
             .addDialog(new BookingDialog(BOOKING_DIALOG))
+            // .addDialog(new LoginDialog(LOGIN_DIALOG))
             .addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
                 this.loginStep.bind(this),
                 this.introStep.bind(this),
@@ -59,36 +65,39 @@ class MainDialog extends ComponentDialog {
     }
 
     async loginStep(stepContext) {
-        await stepContext.context.sendActivity('this is login dialog')
+        // return await stepContext.beginDialog('loginDialog')
 
-        const userName = stepContext.context.activity.text.split('.')[0]
-        const password = stepContext.context.activity.text.split('.')[1]
+        return await LoginDialog.loginStep(stepContext)
+        // await stepContext.context.sendActivity('this is login dialog')
 
-        this.logger.log('username : ', userName)
-        this.logger.log('password : ', password)
+        // const userName = stepContext.context.activity.text.split('.')[0]
+        // const password = stepContext.context.activity.text.split('.')[1]
 
-        try {
-            const ans = await axios.post(userServiceUrl + '/user/login' , {
-                username: userName,
-                password: password
-            })
-            console.log(ans.data)
+        // this.logger.log('username : ', userName)
+        // this.logger.log('password : ', password)
 
-            let accessToken = ans.data.accessToken
+        // try {
+        //     const ans = await axios.post(userServiceUrl + '/user/login' , {
+        //         username: userName,
+        //         password: password
+        //     })
+        //     console.log(ans.data)
 
-            let decoded = jwtDecode(accessToken)
-            let userId = decoded.userId
-            console.log('userId : ' + userId)
+        //     let accessToken = ans.data.accessToken
 
-            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+        //     let decoded = jwtDecode(accessToken)
+        //     let userId = decoded.userId
+        //     console.log('userId : ' + userId)
+
+        //     axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
             
-            await stepContext.context.sendActivity('Login Success!!!')
-            // Run the Dialog with the new message Activity.
-            return await stepContext.next()
-        } catch (err) {
-            console.log(err)
-            await stepContext.context.sendActivity('Login Failed\n Please re-enter username.password!!!')
-        }     
+        //     await stepContext.context.sendActivity('Login Success!!!')
+        //     // Run the Dialog with the new message Activity.
+        //     return await stepContext.next()
+        // } catch (err) {
+        //     console.log(err)
+        //     await stepContext.context.sendActivity('Login Failed\n Please re-enter username.password!!!')
+        // }
     }
 
     /**
@@ -101,7 +110,15 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.');
             return await stepContext.next();
         }
-        return await stepContext.prompt('TextPrompt', { prompt: 'What can I help you with today?\nSay something like "Book a room 2222 from 2am-3am on today' });
+        return await stepContext.prompt('ChoicePrompt', { prompt: 'What do you want?',
+                                                            listStyle: 3,
+                                                            choices: [
+                                                                {value: '1'},
+                                                                {value: '2'}
+                                                            ]
+                                                        })
+        // return await ChooseDialog.chooseStep(stepContext)
+        // return await stepContext.prompt('TextPrompt', { prompt: 'What can I help you with today?\nSay something like Book a room 2222 from 6pm-7pm on today' });
     }
 
     /**
@@ -117,45 +134,17 @@ class MainDialog extends ComponentDialog {
             // and will then pass those values into the booking dialog
             bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context);
             
-            //! temporary test place bc LUIS is down TT
-            //check room name
-            // let roomName = '2222'
-            // let check = await axios.get(roomServiceUrl + '/room/check/' + roomName)
-            // console.log('roomId : ' + check.data)
-            // // book room API
-            // let roomId = check.data
-            // let startDate = '2025-06-28T03:45:54.539Z'
-            // let endDate =  '2025-06-28T04:45:00.434Z'
-
-            // //getCreatingReservationByUserId
-            // let get = await axios.get(reserveServiceUrl + '/reservation/current/')
-            // console.log(get.data)
-            
-            
-            // await axios.get(roomServiceUrl + '/room/checkDateTime', {
-            //     params : {
-            //         roomId: roomId,
-            //         startDate: startDate,
-            //         endDate: endDate
-            //     }
-            // })
-
-            // let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
-            //     startDate: startDate,
-            //     endDate: endDate,
-            //     title: 'Test'
-            // })
-            // console.log(room.data)
-
-            //!-----------------------------------------------------------------------
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
+
+            // return await stepContext.next();
+
         }
 
         // In this sample we only have a single intent we are concerned with. However, typically a scenario
         // will have multiple different intents each corresponding to starting a different child dialog.
 
         // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
-        return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        // return await stepContext.beginDialog('bookingDialog', bookingDetails);
     }
 
     /**
@@ -187,7 +176,11 @@ class MainDialog extends ComponentDialog {
             let ans = await axios.delete(reserveServiceUrl + '/reservation/current')
             console.log(ans.data)
             await stepContext.context.sendActivity('Reservation Cancel');
+
+            await stepContext.beginDialog('mainWaterfallDialog')
         }
+        await stepContext.beginDialog('mainWaterfallDialog')
+        
         return await stepContext.endDialog();
     }
 }

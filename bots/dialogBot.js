@@ -2,9 +2,6 @@
 // Licensed under the MIT License.
 
 const { ActivityHandler } = require('botbuilder');
-const axios = require('axios')
-
-const userServiceUrl = 'http://localhost:8080'
 
 class DialogBot extends ActivityHandler {
     /**

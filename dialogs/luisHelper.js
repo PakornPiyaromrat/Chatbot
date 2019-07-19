@@ -2,22 +2,29 @@
 // Licensed under the MIT License.
 
 const { LuisRecognizer } = require('botbuilder-ai');
-const { ConfirmPrompt } = require('botbuilder-dialogs');
+const { ConfirmPrompt, ComponentDialog } = require('botbuilder-dialogs');
+const { ChooseDialog } = require('./chooseDialog')
 
 const axios = require('axios')
 
 const CONFIRM_PROMPT = 'confirmPrompt';
+const CHOOSE_DIALOG = 'chooseDialog'
 
 const roomServiceUrl = 'http://localhost:8082'
 const reserveServiceUrl = 'http://localhost:8081'
 
 class LuisHelper {
+    constructor() {
+    
+        this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
+            .addDialog(new ChooseDialog(CHOOSE_DIALOG))
+    }
     /**
      * Returns an object with preformatted LUIS results for the bot's dialogs to consume.
      * @param {*} logger
      * @param {TurnContext} context
      */
-    static async executeLuisQuery(logger, context) {
+    static async executeLuisQuery(logger, context, stepContext) {
         const bookingDetails = {};
 
         try {
@@ -57,8 +64,6 @@ class LuisHelper {
                     let startDate = recognizerResult.luisResult.entities[1].resolution.values[0].start.replace(' ','T')
                     let endDate = recognizerResult.luisResult.entities[1].resolution.values[0].end.replace(' ','T')
 
-                    console.log(startDate)
-
                     console.log('startDate : ' + startDate + ' ' + 'endDate : ' + endDate)
 
                     bookingDetails.startDate = startDate     
@@ -77,8 +82,9 @@ class LuisHelper {
                         }
                     })
                     console.log('roomstatus : ' + status.data)
-                    if ( status == 'reserved' ) {
-                        context.sendActivity('room is already reserved')
+                    if ( status.data == 'reserved' ) {
+                        await context.sendActivity('room is already reserved please choose another room or time')
+                        return await stepContext.endDialog()
                     } else {
                         // book room API 
                         let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
@@ -86,16 +92,26 @@ class LuisHelper {
                             endDate: endDate,
                             title: 'Test'
                         })
-                        console.log(room.data)
+                        console.log('roomData : ' + room.data)
+                        console.log('context : ' + context)
+                        console.log('logger' + logger);
+                        console.log('stepContext : ' + stepContext);
 
-                        await context.sendActivity('passed LUIS')
+                        return await context.sendActivity('API SENT')
+                        // try {
+                        //    return await stepContext.prompt(CONFIRM_PROMPT , { prompt: 'Are you sure to book this room?' }); 
+                        // } catch (e) {
+                        //     logger.warn(e)
+                        // }
+                        // return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
 
-                        return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
                     }
                 break;
 
                 case 'Cancel' :
-                    context.sendActivity('Cancel Switch')
+                    await context.sendActivity('Cancel Switch')
+
+                    return await stepContext.beginDialog('chooseDialog')
                 break;
 
                 case 'Help' :
@@ -107,6 +123,7 @@ class LuisHelper {
             context.sendActivity('failed to use LUIS')
         }
     }
+    
 }
 
 module.exports.LuisHelper = LuisHelper;

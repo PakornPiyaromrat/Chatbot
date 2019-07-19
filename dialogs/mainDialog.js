@@ -17,7 +17,7 @@ const reserveServiceUrl = 'http://localhost:8081'
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
-// const LOGIN_DIALOG = 'loginDialog'
+const CHOOSE_DIALOG = 'chooseDialog'
 
 class MainDialog extends ComponentDialog {
     constructor(logger) {
@@ -35,7 +35,7 @@ class MainDialog extends ComponentDialog {
         this.addDialog(new TextPrompt('TextPrompt'))
             .addDialog(new ChoicePrompt('ChoicePrompt'))
             .addDialog(new BookingDialog(BOOKING_DIALOG))
-            // .addDialog(new LoginDialog(LOGIN_DIALOG))
+            .addDialog(new ChooseDialog(CHOOSE_DIALOG))
             .addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
                 this.loginStep.bind(this),
                 this.introStep.bind(this),
@@ -65,39 +65,9 @@ class MainDialog extends ComponentDialog {
     }
 
     async loginStep(stepContext) {
-        // return await stepContext.beginDialog('loginDialog')
 
         return await LoginDialog.loginStep(stepContext)
-        // await stepContext.context.sendActivity('this is login dialog')
-
-        // const userName = stepContext.context.activity.text.split('.')[0]
-        // const password = stepContext.context.activity.text.split('.')[1]
-
-        // this.logger.log('username : ', userName)
-        // this.logger.log('password : ', password)
-
-        // try {
-        //     const ans = await axios.post(userServiceUrl + '/user/login' , {
-        //         username: userName,
-        //         password: password
-        //     })
-        //     console.log(ans.data)
-
-        //     let accessToken = ans.data.accessToken
-
-        //     let decoded = jwtDecode(accessToken)
-        //     let userId = decoded.userId
-        //     console.log('userId : ' + userId)
-
-        //     axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
-            
-        //     await stepContext.context.sendActivity('Login Success!!!')
-        //     // Run the Dialog with the new message Activity.
-        //     return await stepContext.next()
-        // } catch (err) {
-        //     console.log(err)
-        //     await stepContext.context.sendActivity('Login Failed\n Please re-enter username.password!!!')
-        // }
+        
     }
 
     /**
@@ -110,15 +80,21 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.');
             return await stepContext.next();
         }
-        return await stepContext.prompt('ChoicePrompt', { prompt: 'What do you want?',
-                                                            listStyle: 3,
-                                                            choices: [
-                                                                {value: '1'},
-                                                                {value: '2'}
-                                                            ]
-                                                        })
-        // return await ChooseDialog.chooseStep(stepContext)
-        // return await stepContext.prompt('TextPrompt', { prompt: 'What can I help you with today?\nSay something like Book a room 2222 from 6pm-7pm on today' });
+        // return ChooseDialog.chooseStep(stepContext)
+        // await stepContext.prompt('ChoicePrompt', { 
+        //     prompt: 'What do you want to do?',
+        //     listStyle: 3,
+        //     choices: [
+        //         {value: 'reserve room'},
+        //         {value: 'see your incoming reserve'},
+        //         {value: 'cancel your room'},
+        //         {value: 'see all room reserve timeline'}
+        //     ],
+        //     retryPrompt: 'Please choose number below'
+        // })
+        console.log('stepContext' + stepContext)
+        return await stepContext.beginDialog('chooseDialog')
+        
     }
 
     /**
@@ -132,8 +108,9 @@ class MainDialog extends ComponentDialog {
             // Call LUIS and gather any potential booking details.
             // This will attempt to extract the origin, destination and travel date from the user's message
             // and will then pass those values into the booking dialog
-            bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context);
-            
+            console.log('stepContext : ')
+            bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context, stepContext);
+ 
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
 
             // return await stepContext.next();
@@ -144,7 +121,8 @@ class MainDialog extends ComponentDialog {
         // will have multiple different intents each corresponding to starting a different child dialog.
 
         // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
-        // return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        
     }
 
     /**
@@ -153,6 +131,7 @@ class MainDialog extends ComponentDialog {
      */
     async finalStep(stepContext) {
         // If the child dialog ("bookingDialog") was cancelled or the user failed to confirm, the Result here will be null.
+        console.log('result : ' + stepContext.result);
         if (stepContext.result) {
             const result = stepContext.result;
             //!---------------------------------------------------------------------
@@ -160,10 +139,13 @@ class MainDialog extends ComponentDialog {
                 let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
                 console.log(ans.data)
                 stepContext.context.sendActivity('Reservation Confirmed')
+
+                return await stepContext.beginDialog('chooseDialog')
+
             } catch (e) {
                 console.log(e)
             }
-          
+            
             //!---------------------------------------------------------------------
             // Now we have all the booking details.
             // This is where calls to the booking AOU service or database would go.
@@ -177,11 +159,14 @@ class MainDialog extends ComponentDialog {
             console.log(ans.data)
             await stepContext.context.sendActivity('Reservation Cancel');
 
-            await stepContext.beginDialog('mainWaterfallDialog')
+            await stepContext.endDialog()
+            return await stepContext.beginDialog('chooseDialog')
         }
-        await stepContext.beginDialog('mainWaterfallDialog')
+        await stepContext.endDialog()
+
+        return await stepContext.beginDialog('chooseDialog')
         
-        return await stepContext.endDialog();
+        // return await stepContext.endDialog();
     }
 }
 

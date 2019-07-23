@@ -2,20 +2,25 @@
 // Licensed under the MIT License.
 
 const { LuisRecognizer } = require('botbuilder-ai');
-const { ConfirmPrompt, ComponentDialog } = require('botbuilder-dialogs');
+const { ConfirmPrompt } = require('botbuilder-dialogs');
 const { ChooseDialog } = require('./chooseDialog')
+const { CancelAndHelpDialog } = require('./cancelAndHelpDialog');
+
 
 const axios = require('axios')
 
 const CONFIRM_PROMPT = 'confirmPrompt';
 const CHOOSE_DIALOG = 'chooseDialog'
+const DATE_RESOLVER_DIALOG = 'dateResolverDialog';
+
 
 const roomServiceUrl = 'http://localhost:8082'
 const reserveServiceUrl = 'http://localhost:8081'
 
-class LuisHelper {
-    constructor() {
-    
+class LuisHelper extends CancelAndHelpDialog {
+    constructor(id) {
+        super(id || 'luisHelper')
+
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
             .addDialog(new ChooseDialog(CHOOSE_DIALOG))
     }
@@ -24,6 +29,8 @@ class LuisHelper {
      * @param {*} logger
      * @param {TurnContext} context
      */
+
+
     static async executeLuisQuery(logger, context, stepContext) {
         const bookingDetails = {};
 
@@ -58,6 +65,11 @@ class LuisHelper {
                     //! API check roomName and sent roomId back
                     const check = await axios.get(roomServiceUrl + '/room/check/'+ roomName)
                     let roomId = check.data
+                    if (roomId === 'invalid roomName') {
+                        await context.sendActivity('room is invalid please choose another room')
+                        
+                        return stepContext.endDialog()
+                    }
                     console.log("roomId :  "+ roomId)
                     console.log('----------------------------------')
 
@@ -66,14 +78,14 @@ class LuisHelper {
 
                     console.log('startDate : ' + startDate + ' ' + 'endDate : ' + endDate)
 
-                    bookingDetails.startDate = startDate     
+                    bookingDetails.startDate = startDate
                     bookingDetails.endtDate = endDate
                     
                     //getCreatingReservationByUserId
                     let get = await axios.get(reserveServiceUrl + '/reservation/current/')
                     console.log(get.data)
 
-                    //check dateTime status
+                    //! check dateTime status
                     let status = await axios.get(roomServiceUrl + '/room/checkDateTime', {
                         params : {
                             roomId: roomId,
@@ -85,6 +97,12 @@ class LuisHelper {
                     console.log('roomstatus : ' + status.data)
                     if ( status.data == 'reserved' ) {
                         await context.sendActivity('room is already reserved please choose another room or time')
+                        
+                        
+                        await stepContext.endDialog()
+                        return await stepContext.beginDialog('chooseDialog')
+                    } else if ( status.data == 'invalid time') {
+                        await context.sendActivity('invalid time please choose another time')
                         await stepContext.endDialog()
                         return await stepContext.beginDialog('chooseDialog')
                     } else {
@@ -96,13 +114,16 @@ class LuisHelper {
                         })
                         console.log('roomData : ' + room.data)
                         console.log('context : ' + context)
-                        console.log('logger' + logger);
+                        console.log('logger: ' + logger)
                         console.log('stepContext : ' + stepContext);
 
                         await context.sendActivity('API SENT')
                         
+                        return await stepContext.prompt(CONFIRM_PROMPT , { prompt: 'Are you sure to book this room?' });
+
+                        console.log(stepContext.result)
                         try {
-                            // await stepContext.prompt(CONFIRM_PROMPT , { prompt: 'Are you sure to book this room?' }); 
+                             
                             
                             let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
                             console.log(ans.data)
@@ -132,7 +153,7 @@ class LuisHelper {
                     //! delete reservation
                     let ansDel = await axios.delete(reserveServiceUrl + '/reservation/current')
                     // console.log(ansDel.data)
-                    await stepContext.context.sendActivity('Reservation Cancel');
+                    await stepContext.context.sendActivity('Deleted Reservation');
                     
                     await stepContext.endDialog()
                     return await stepContext.beginDialog('chooseDialog')
@@ -145,28 +166,36 @@ class LuisHelper {
                 case 'History' :
                     console.log('intent : ' + intent);
                     console.log('--------------------------------------');
-                    const history = await axios.get(reserveServiceUrl + '/reservation/current/history')
+
+                    // const history = await axios.get(reserveServiceUrl + '/reservation/current/history')
+                    const history = await axios.get(reserveServiceUrl + '/reservation/')
                     
                     const array = history.data.reservationHistory
-                    var myJson = JSON.stringify(array)
+                    const myJson = JSON.stringify(array)
                     const result = array.map(arr => ({startDate: arr.summaryStartDate, endDate: arr.summaryEndDate}))
-                    console.log(array[0].title);
+                    console.log(array);
                     console.log('--------------------------------------');
                     console.log(myJson)
                     console.log('--------------------------------------');
-                    console.log(result);
+                    console.log(result.length);
+                    
+                    
 
-                    await stepContext.context.sendActivity(
-                        'id : ' + array[0]._id + '\t' + 
-                        'startDate : ' + array[0].summaryStartDate + '\t' +
-                        'endDate : ' + array[0].summaryEndDate)
+                    for (let i = 0; i < result.length; i++) {
+                        await stepContext.context.sendActivity(
+                            'id : ' + array[i]._id + '\t' + 
+                            'startDate : ' + array[i].summaryStartDate + '\t' +
+                            'endDate : ' + array[i].summaryEndDate
+                        )
+                    }
+                    
                     
                     // await stepContext.context.sendActivity(myJson);
-                    await stepContext.context.sendActivity(result);
+                    // await stepContext.context.sendActivity(result);
                     
                     
                     await stepContext.endDialog()
-                    return await stepContext.beginDialog('chooseDialog')
+                    // return await stepContext.beginDialog('chooseDialog')
                 break
             }
         } catch (err) {

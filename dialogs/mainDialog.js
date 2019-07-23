@@ -102,9 +102,9 @@ class MainDialog extends ComponentDialog {
             bookingDetails = await LuisHelper.executeLuisQuery(this.logger, stepContext.context, stepContext);
  
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
+            
 
-            return await stepContext.continueDialog();
-            // return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
+            return await stepContext.next();
         }
 
         // In this sample we only have a single intent we are concerned with. However, typically a scenario
@@ -121,42 +121,37 @@ class MainDialog extends ComponentDialog {
      */
     async finalStep(stepContext) {
         // If the child dialog ("bookingDialog") was cancelled or the user failed to confirm, the Result here will be null.
-        console.log('result : ' + stepContext.result);
-        if (stepContext.result) {
-            const result = stepContext.result;
-            //!---------------------------------------------------------------------
-            try {
-                let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
-                console.log(ans.data)
-                stepContext.context.sendActivity('Reservation Confirmed')
-
-                return await stepContext.beginDialog('chooseDialog')
-
-            } catch (e) {
-                console.log(e)
-            }
-            
-            //!---------------------------------------------------------------------
-            // Now we have all the booking details.
-            // This is where calls to the booking AOU service or database would go.
-            // If the call to the booking service was successful tell the user.
-            const timeProperty = new TimexProperty(result.travelDate);
-            const travelDateMsg = timeProperty.toNaturalLanguage(new Date(Date.now()));
-            const msg = `I have you booked to ${ result.destination } from ${ result.origin } on ${ travelDateMsg }.`;
-            await stepContext.context.sendActivity(msg);
-        } else {
-            let ans = await axios.delete(reserveServiceUrl + '/reservation/current')
-            console.log(ans.data)
-            await stepContext.context.sendActivity('Reservation Cancel');
-
-            await stepContext.endDialog()
-            return await stepContext.beginDialog('chooseDialog')
-        }
-        await stepContext.endDialog()
-
-        return await stepContext.beginDialog('chooseDialog')
         
-        // return await stepContext.endDialog();
+        //!---------------------------------------------------------------------
+        console.log('result : ' + stepContext.result);
+        // if (stepContext.result) {
+        //     const result = stepContext.result;
+        //     //!---------------------------------------------------------------------
+        //     try {
+        //         let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
+        //         console.log(ans.data)
+        //         stepContext.context.sendActivity('Reservation Confirmed')
+
+        //         return await stepContext.beginDialog('chooseDialog')
+
+        //     } catch (e) {
+        //         console.log(e)
+        //     }
+            
+        //     //!---------------------------------------------------------------------
+            
+        // } else {
+        //     let ans = await axios.delete(reserveServiceUrl + '/reservation/current')
+        //     console.log(ans.data)
+        //     await stepContext.context.sendActivity('Reservation Cancel');
+
+        //     await stepContext.endDialog()
+        //     return await stepContext.beginDialog('chooseDialog')
+        // }
+        // await stepContext.endDialog()
+
+        // return await stepContext.beginDialog('chooseDialog')
+        
     }
 }
 

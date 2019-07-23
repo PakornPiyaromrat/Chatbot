@@ -55,7 +55,7 @@ class LuisHelper {
                     logger.log('roomName : ' + roomName)
                     console.log('----------------------------------')
 
-                    //API check roomName and sent roomId back
+                    //! API check roomName and sent roomId back
                     const check = await axios.get(roomServiceUrl + '/room/check/'+ roomName)
                     let roomId = check.data
                     console.log("roomId :  "+ roomId)
@@ -81,10 +81,12 @@ class LuisHelper {
                             endDate: endDate
                         }
                     })
+                    
                     console.log('roomstatus : ' + status.data)
                     if ( status.data == 'reserved' ) {
                         await context.sendActivity('room is already reserved please choose another room or time')
-                        return await stepContext.endDialog()
+                        await stepContext.endDialog()
+                        return await stepContext.beginDialog('chooseDialog')
                     } else {
                         // book room API 
                         let room = await axios.post(roomServiceUrl + '/room/' + roomId + '/reserve', {
@@ -97,26 +99,75 @@ class LuisHelper {
                         console.log('logger' + logger);
                         console.log('stepContext : ' + stepContext);
 
-                        return await context.sendActivity('API SENT')
-                        // try {
-                        //    return await stepContext.prompt(CONFIRM_PROMPT , { prompt: 'Are you sure to book this room?' }); 
-                        // } catch (e) {
-                        //     logger.warn(e)
-                        // }
+                        await context.sendActivity('API SENT')
+                        
+                        try {
+                            // await stepContext.prompt(CONFIRM_PROMPT , { prompt: 'Are you sure to book this room?' }); 
+                            
+                            let ans = await axios.post(reserveServiceUrl + '/reservation/current/confirm')
+                            console.log(ans.data)
+                            stepContext.context.sendActivity('Reservation Confirmed')
+                            
+                            return await stepContext.beginDialog('chooseDialog')
+
+                        } catch (e) {
+                            logger.warn(e)
+                        }
                         // return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
 
                     }
                 break;
 
                 case 'Cancel' :
-                    await context.sendActivity('Cancel Switch')
-
+                    logger.log("intent : " + intent)
+                    // //! get roomId from roomName
+                    // let roomNameDel = recognizerResult.entities.Room_Number
+                    // console.log('----------------------------------')
+                    // logger.log('roomName : ' + roomNameDel)
+                    // console.log('----------------------------------')
+                    // const checkDel = await axios.get(roomServiceUrl + '/room/check/'+ roomNameDel)
+                    // let roomIdDel = checkDel.data
+                    // console.log("roomId :  "+ roomIdDel)
+                    // console.log('----------------------------------')
+                    //! delete reservation
+                    let ansDel = await axios.delete(reserveServiceUrl + '/reservation/current')
+                    // console.log(ansDel.data)
+                    await stepContext.context.sendActivity('Reservation Cancel');
+                    
+                    await stepContext.endDialog()
                     return await stepContext.beginDialog('chooseDialog')
                 break;
 
                 case 'Help' :
                     context.sendActivity('Help Switch')
                 break;
+
+                case 'History' :
+                    console.log('intent : ' + intent);
+                    console.log('--------------------------------------');
+                    const history = await axios.get(reserveServiceUrl + '/reservation/current/history')
+                    
+                    const array = history.data.reservationHistory
+                    var myJson = JSON.stringify(array)
+                    const result = array.map(arr => ({startDate: arr.summaryStartDate, endDate: arr.summaryEndDate}))
+                    console.log(array[0].title);
+                    console.log('--------------------------------------');
+                    console.log(myJson)
+                    console.log('--------------------------------------');
+                    console.log(result);
+
+                    await stepContext.context.sendActivity(
+                        'id : ' + array[0]._id + '\t' + 
+                        'startDate : ' + array[0].summaryStartDate + '\t' +
+                        'endDate : ' + array[0].summaryEndDate)
+                    
+                    // await stepContext.context.sendActivity(myJson);
+                    await stepContext.context.sendActivity(result);
+                    
+                    
+                    await stepContext.endDialog()
+                    return await stepContext.beginDialog('chooseDialog')
+                break
             }
         } catch (err) {
             logger.warn(`LUIS Exception: ${ err } Check your LUIS configuration`);

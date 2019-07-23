@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 const { TimexProperty } = require('@microsoft/recognizers-text-data-types-timex-expression');
-const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog, ChoicePrompt } = require('botbuilder-dialogs');
+const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog, ChoicePrompt, ConfirmPrompt } = require('botbuilder-dialogs');
 const { BookingDialog } = require('./bookingDialog');
 const { LuisHelper } = require('./luisHelper');
 const { LoginDialog } = require('./loginDialog')
@@ -15,6 +15,7 @@ const userServiceUrl = 'http://localhost:8080'
 const roomServiceUrl = 'http://localhost:8082'
 const reserveServiceUrl = 'http://localhost:8081'
 
+const CONFIRM_PROMPT = 'confirmPrompt';
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const BOOKING_DIALOG = 'bookingDialog';
 const CHOOSE_DIALOG = 'chooseDialog'
@@ -36,6 +37,7 @@ class MainDialog extends ComponentDialog {
             .addDialog(new ChoicePrompt('ChoicePrompt'))
             .addDialog(new BookingDialog(BOOKING_DIALOG))
             .addDialog(new ChooseDialog(CHOOSE_DIALOG))
+            .addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
             .addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
                 this.loginStep.bind(this),
                 this.introStep.bind(this),
@@ -80,19 +82,7 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.');
             return await stepContext.next();
         }
-        // return ChooseDialog.chooseStep(stepContext)
-        // await stepContext.prompt('ChoicePrompt', { 
-        //     prompt: 'What do you want to do?',
-        //     listStyle: 3,
-        //     choices: [
-        //         {value: 'reserve room'},
-        //         {value: 'see your incoming reserve'},
-        //         {value: 'cancel your room'},
-        //         {value: 'see all room reserve timeline'}
-        //     ],
-        //     retryPrompt: 'Please choose number below'
-        // })
-        console.log('stepContext' + stepContext)
+        
         return await stepContext.beginDialog('chooseDialog')
         
     }
@@ -113,15 +103,15 @@ class MainDialog extends ComponentDialog {
  
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
 
-            // return await stepContext.next();
-
+            return await stepContext.continueDialog();
+            // return await stepContext.prompt(CONFIRM_PROMPT, { prompt: 'Are you sure to book this room?' });
         }
 
         // In this sample we only have a single intent we are concerned with. However, typically a scenario
         // will have multiple different intents each corresponding to starting a different child dialog.
 
         // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
-        return await stepContext.beginDialog('bookingDialog', bookingDetails);
+        // return await stepContext.beginDialog('bookingDialog', bookingDetails);
         
     }
 

@@ -24,7 +24,7 @@ class ChooseDialog extends ComponentDialog {
             listStyle: 3,
             choices: [
                 {value: 'reserve room'},
-                {value: 'see your incoming reserve'},
+                {value: 'see your reservation history'},
                 {value: 'cancel your room'},
                 {value: 'see all room reserve timeline'}
             ],
@@ -47,8 +47,13 @@ class ChooseDialog extends ComponentDialog {
                 }
             break
 
-            case 'see your incoming reserve' :
-                stepContext.context.sendActivity('incoming reserve')
+            case 'see your reservation history' :
+                try {
+                    return stepContext.prompt(TEXT_PROMPT, { prompt: 'say history'})
+                } catch (e) {
+                    console.log(e)
+                    this.endDialog()
+                }
             break
             
             case 'cancel your room' :

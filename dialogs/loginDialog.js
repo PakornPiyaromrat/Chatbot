@@ -1,18 +1,16 @@
 const { TextPrompt, WaterfallDialog, ComponentDialog } = require('botbuilder-dialogs')
-const { mainDialog } = require('./mainDialog')
+const { MainDialog } = require('./mainDialog')
+const { CancelAndHelpDialog } = require('./cancelAndHelpDialog');
 
 const axios = require('axios')
 const jwtDecode = require('jwt-decode')
 
 const userServiceUrl = 'http://localhost:8080'
 
-const WATERFALL_DIALOG = 'waterfallDialog';
-const TEXT_PROMPT = 'textPrompt';
-const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
+const MAIN_DIALOG = 'mainwaterfallDialog'
 
-
-class LoginDialog {
-
+class LoginDialog  {
+    
     static async loginStep(stepContext) {
         await stepContext.context.sendActivity('this is login dialog')
 

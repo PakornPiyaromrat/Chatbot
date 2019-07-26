@@ -67,9 +67,7 @@ class MainDialog extends ComponentDialog {
     }
 
     async loginStep(stepContext) {
-
         return await LoginDialog.loginStep(stepContext)
-        
     }
 
     /**
@@ -82,9 +80,7 @@ class MainDialog extends ComponentDialog {
             await stepContext.context.sendActivity('NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.');
             return await stepContext.next();
         }
-        
         return await stepContext.beginDialog('chooseDialog')
-        
     }
 
     /**
@@ -103,7 +99,6 @@ class MainDialog extends ComponentDialog {
  
             this.logger.log('LUIS extracted these booking details:', bookingDetails);
             
-
             return await stepContext.next();
         }
 

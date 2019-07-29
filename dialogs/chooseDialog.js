@@ -2,6 +2,8 @@ const { ChoicePrompt, ComponentDialog, WaterfallDialog, TextPrompt, ConfirmPromp
 const axios = require('axios')
 
 const reserveServiceUrl = 'http://localhost:8081'
+const roomServiceUrl = 'http://localhost:8082'
+
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 const TEXT_PROMPT = 'textPrompt'
@@ -64,7 +66,7 @@ class ChooseDialog extends ComponentDialog {
                 const historyCancel = await axios.get(reserveServiceUrl + '/reservation/')
                 console.log( historyCancel);
                 console.log('--------------------------------------');
-
+                //!------------------------------------------------------
                 const arrayHistory = historyCancel.data.reservationHistory  
                 const resultHistory = arrayHistory.map(arr => ({startDate: arr.summaryStartDate, endDate: arr.summaryEndDate}))
                 console.log(arrayHistory);
@@ -92,17 +94,51 @@ class ChooseDialog extends ComponentDialog {
                         stepContext.endDialog()
                     }
                 }
-                // try {
-                //     return stepContext.prompt(TEXT_PROMPT, { prompt: 'say cancel {id} '})
-                // } catch (err) {
-                //     console.log(err)
-                //     stepContext.endDialog()
-                // }
             break
 
-            case 'see available room ' :
+            case 'see available room' :
+                //! get all room
+                const allRoom = await axios.get(roomServiceUrl + '/room/')
+                const res = allRoom.data.response
+                const arrayReservation = allRoom.data.response.reservation
+                
+                console.log('-----------------------------');
+                console.log(res);
+                console.log('------------------------------------');
+                console.log('roomLength : ' + res.length)
+                console.log('------------------------------------');
+                // console.log('arrayReservationLength : ' + arrayReservation.length);
+                //! ---------------------------------------------------
+                console.log(res[0].reservation.length);
+
+                await stepContext.context.sendActivity('Time that is already reserved')
+
+                for ( let i = 0; i < res.length; i++ ) {
+                    for ( let j = 0; j < res[i].reservation.length; j++ ) {
+                        console.log(i + ' ' + j)
+                        if ( res[i].reservation.length < 1 ) {
+                            console.log(res[i].roomName + 'this room do not have reservation')
+                        } else {
+                            console.log(res[i].roomName + 'this room has reservation')
+                            await stepContext.context.sendActivity(
+                                'roomName : ' + res[i].roomName + '\t' +
+                                'startDate : ' + res[i].reservation[j].startDate + '\t' +
+                                'endDate : ' + res[i].reservation[j].endDate
+                            )
+                        }
+                    }
+                }
+
+                await stepContext.context.sendActivity('This is all the room we have')
+
+                for ( let i = 0; i < res.length; i++ ) {
+                    await stepContext.context.sendActivity(
+                        'roomName ' + res[i].roomName
+                    )
+                }
+
                 try {
-                    return stepContext.prompt(TEXT_PROMPT, { prompt: 'say available'})
+                    return stepContext.prompt(TEXT_PROMPT, { prompt: 'say something like "available room 2222 from 5pm-6pm on today" '})
                 } catch (err) {
                     console.log(err)
                     stepContext.endDialog()

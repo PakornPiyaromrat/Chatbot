@@ -169,39 +169,17 @@ class LuisHelper extends CancelAndHelpDialog {
                 case 'Cancel' :
                     logger.log("intent : " + intent)
                     // //! get history
-                    // const historyCancel = await axios.get(reserveServiceUrl + '/reservation/')
-                    // console.log( historyCancel);
-                    // console.log('--------------------------------------');
-
-                    // const arrayHistory = historyCancel.data.reservationHistory  
-                    // const resultHistory = arrayHistory.map(arr => ({startDate: arr.summaryStartDate, endDate: arr.summaryEndDate}))
-                    // console.log(arrayHistory);
-                    // console.log('--------------------------------------');
-                    // console.log(resultHistory.length);
                     const historyId = recognizerResult.entities.Reservation_ID
                     console.log('historyId : ' + historyId);
 
-                    // if ( resultHistory.length < 1 ){
-                    //     return await context.sendActivity('you never book a room')
-                    // } else {
-                    //     for ( let i = 0; i < resultHistory.length; i++ ) {
-                    //         await stepContext.context.sendActivity(
-                    //             'id : ' + arrayHistory[i]._id + '\t' + 
-                    //             'startDate : ' + arrayHistory[i].summaryStartDate + '\t' +
-                    //             'endDate : ' + arrayHistory[i].summaryEndDate
-                    //         )
-                    //     }
-                        
-                        // await stepContext.prompt('TextPrompt', { prompt: 'please choose id you want to delete from above'})
-                        //! delete reservation
-                        let ansDel = await axios.delete(reserveServiceUrl + '/reservation/history/' + historyId)
-                        console.log(ansDel.data)
-                        await context.sendActivity('Deleted Reservation');
-                        
-                        await stepContext.endDialog()
-                        return await stepContext.beginDialog('chooseDialog')
-                    // }
-                   
+                    //! delete reservation
+                    let ansDel = await axios.delete(reserveServiceUrl + '/reservation/history/' + historyId)
+                    console.log(ansDel.data)
+                    await context.sendActivity('Deleted Reservation');
+                    
+                    await stepContext.endDialog()
+                    return await stepContext.beginDialog('chooseDialog')
+              
                 break;
 
                 case 'Help' :
@@ -221,30 +199,31 @@ class LuisHelper extends CancelAndHelpDialog {
                     console.log(array);
                     
                     console.log('--------------------------------------');
-                    console.log(result.length);
+                    console.log('array length : ' + result.length);
 
                     if ( result.length < 1 ){
                         return await context.sendActivity('you never book a room')
                     } else {
-                        for ( let i = 0; i < result.length; i++ ) {
+                        for (let i = 0; i < result.length; i++ ) {
+                            console.log('round : ' + i);
+            
                             await stepContext.context.sendActivity(
                                 'id : ' + array[i]._id + '\t' + 
-                                'roomName : ' + array[i].roomName + '\t' +
+                                'roomName : ' + array[i].roomList[0].roomName + '\t' +
                                 'startDate : ' + array[i].summaryStartDate + '\t' +
                                 'endDate : ' + array[i].summaryEndDate
                             )
                         }                      
                         return await stepContext.beginDialog('chooseDialog')
                     }
-                       
-                    // await stepContext.context.sendActivity(myJson);
-                    // await stepContext.context.sendActivity(result);
+                        
                     //!---------------------------------------------------------------
                 break
 
                 case 'Available' :
                     console.log('intent :: ' + intent);
                     console.log('-----------------------------');
+
 
                 break   
             }
